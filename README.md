@@ -1,27 +1,27 @@
 # AI-Chat GitOps
 
-Ce repo contient les manifests Kubernetes du projet AI-Chat, déployés automatiquement via ArgoCD selon le pattern GitOps. Toute modification poussée sur `main` est détectée et appliquée par ArgoCD sur le cluster K3s.
+This repository contains the Kubernetes manifests for the AI-Chat project, automatically deployed through Argo CD using the GitOps pattern. Any change pushed to `main` is detected and applied by Argo CD to the K3s cluster.
 
-## 📋 Table des matières
+## 📋 Table of Contents
 
-- [Vue d'ensemble](#vue-densemble)
+- [Overview](#overview)
 - [Architecture](#architecture)
-- [Prérequis](#prérequis)
-- [Structure du repo](#structure-du-repo)
-- [Déploiement](#déploiement)
+- [Prerequisites](#prerequisites)
+- [Repository Structure](#repository-structure)
+- [Deployment](#deployment)
 - [Manifests](#manifests)
-- [Modèles IA](#modèles-ia)
-- [Mise à jour de l'image](#mise-à-jour-de-limage)
-- [Dépannage](#dépannage)
+- [AI Models](#ai-models)
+- [Updating the Image](#updating-the-image)
+- [Troubleshooting](#troubleshooting)
 
-## 🎯 Vue d'ensemble
+## 🎯 Overview
 
-Ce repo GitOps orchestre le déploiement de deux composants principaux sur Kubernetes :
+This GitOps repository orchestrates the deployment of two main components on Kubernetes:
 
-- **Ollama** — serveur d'inférence IA avec 3 modèles (llama3:8b, llava:7b, gemma4:12b)
-- **Frontend Next.js** — interface de chat exposée via Traefik Ingress
+- **Ollama** — AI inference server with 3 models (llama3:8b, llava:7b, gemma4:12b)
+- **Next.js frontend** — Chat interface exposed through a Traefik Ingress
 
-Le pipeline CI/CD du repo [AI-Chat-app](https://github.com/CL-KRMA/AI-Chat-app) met automatiquement à jour le tag de l'image dans `frontend.yaml` à chaque push sur `main`, déclenchant un déploiement ArgoCD.
+The CI/CD pipeline in the [AI-Chat-app](https://github.com/CL-KRMA/AI-Chat-app) repository automatically updates the image tag in `frontend.yaml` on every push to `main`, triggering an Argo CD deployment.
 
 ## 🏗️ Architecture
 
@@ -34,7 +34,7 @@ Le pipeline CI/CD du repo [AI-Chat-app](https://github.com/CL-KRMA/AI-Chat-app) 
                             │
                             ▼
                 ┌───────────────────────┐
-                │  Namespace : ai-chat  │
+                │  Namespace: ai-chat   │
                 │                       │
                 │  ┌─────────────────┐  │
                 │  │ Frontend        │  │
@@ -54,53 +54,53 @@ Le pipeline CI/CD du repo [AI-Chat-app](https://github.com/CL-KRMA/AI-Chat-app) 
                 │           │           │
                 │  ┌────────▼────────┐  │
                 │  │ PVC 30Gi        │  │
-                │  │ (modèles IA)    │  │
+                │  │ (AI models)     │  │
                 │  └─────────────────┘  │
                 └───────────────────────┘
 ```
 
-## 📦 Prérequis
+## 📦 Prerequisites
 
-- Cluster K3s opérationnel (3 nœuds minimum)
-- ArgoCD installé sur le cluster
-- Traefik installé (inclus par défaut avec K3s)
-- DNS `ai-chat.com` pointant vers l'IP publique du master
-- Nœud avec minimum **32GB RAM** pour Ollama
+- Operational K3s cluster (at least 3 nodes)
+- Argo CD installed on the cluster
+- Traefik installed (included by default with K3s)
+- `ai-chat.com` DNS pointing to the master's public IP address
+- Node with at least **32GB RAM** for Ollama
 
-## 📁 Structure du repo
+## 📁 Repository Structure
 
 ```
 AI-Chat-gitops/
-├── namespace.yaml    # Namespace ai-chat
-├── ollama.yaml       # Deployment Ollama + PVC + Service
-├── frontend.yaml     # Deployment Next.js + Service
-├── ingress.yaml      # Ingress Traefik (ai-chat.com)
+├── namespace.yaml    # ai-chat namespace
+├── ollama.yaml       # Ollama Deployment + PVC + Service
+├── frontend.yaml     # Next.js Deployment + Service
+├── ingress.yaml      # Traefik Ingress (ai-chat.com)
 └── README.md
 ```
 
-## 🚀 Déploiement
+## 🚀 Deployment
 
-### Déploiement manuel (première fois)
+### Manual Deployment (First Time)
 
 ```bash
-# 1. Créer le namespace
+# 1. Create the namespace
 kubectl apply -f namespace.yaml
 
-# 2. Déployer Ollama (le pull des modèles prend 20-30 min)
+# 2. Deploy Ollama (model downloads take 20–30 minutes)
 kubectl apply -f ollama.yaml
 
-# 3. Déployer le frontend
+# 3. Deploy the frontend
 kubectl apply -f frontend.yaml
 
-# 4. Configurer l'Ingress
+# 4. Configure the Ingress
 kubectl apply -f ingress.yaml
 ```
 
-### Déploiement automatique via ArgoCD
+### Automatic Deployment Through Argo CD
 
-Après la configuration initiale, ArgoCD surveille ce repo et applique automatiquement tout changement poussé sur `main`.
+After the initial setup, Argo CD monitors this repository and automatically applies any changes pushed to `main`.
 
-**Configurer ArgoCD :**
+**Configure Argo CD:**
 
 ```bash
 kubectl apply -f - <<EOF
@@ -129,148 +129,148 @@ EOF
 
 ### namespace.yaml
 
-Crée le namespace `ai-chat` avec les labels `project` et `environment` pour filtrer facilement les ressources.
+Creates the `ai-chat` namespace with `project` and `environment` labels to make it easier to filter resources.
 
 ### ollama.yaml
 
-Contient trois ressources :
+Contains three resources:
 
-**Deployment Ollama** avec deux conteneurs :
-- `initContainer (pull-models)` — télécharge les 3 modèles au premier démarrage avant de lancer le serving. Si un pull échoue, le pod reste en `Init:Error` — comportement explicite et détectable.
-- `Container (ollama)` — lance `ollama serve` en foreground. Si le process crash, Kubernetes redémarre automatiquement le pod.
+**Ollama Deployment** with two containers:
+- `initContainer (pull-models)` — downloads the 3 models on first startup before starting the server. If a pull fails, the pod remains in `Init:Error`, making the failure explicit and detectable.
+- `Container (ollama)` — runs `ollama serve` in the foreground. If the process crashes, Kubernetes automatically restarts the pod.
 
-**PersistentVolumeClaim** — 30Gi pour stocker les modèles (~16.6GB au total + marge).
+**PersistentVolumeClaim** — 30Gi to store the models (~16.6GB total, plus extra capacity).
 
-**Service** — expose Ollama sur le port `11434` en interne au cluster.
+**Service** — exposes Ollama on port `11434` within the cluster.
 
 ### frontend.yaml
 
-**Deployment Next.js** avec :
-- Image mise à jour automatiquement par le pipeline CI à chaque push
-- Variable d'environnement `OLLAMA_API_URL=http://ollama:11434`
-- `readinessProbe` — Kubernetes attend que Next.js soit prêt avant d'envoyer du trafic
-- `livenessProbe` — Kubernetes redémarre le pod si Next.js ne répond plus
-- Resources limitées à 512Mi RAM / 500m CPU
+**Next.js Deployment** with:
+- Image automatically updated by the CI pipeline on every push
+- `OLLAMA_API_URL=http://ollama:11434` environment variable
+- `readinessProbe` — Kubernetes waits for Next.js to be ready before sending traffic
+- `livenessProbe` — Kubernetes restarts the pod if Next.js stops responding
+- Resources limited to 512Mi RAM / 500m CPU
 
-**Service** — mappe le port `80` vers le port `3000` du container.
+**Service** — maps port `80` to the container's port `3000`.
 
 ### ingress.yaml
 
-Expose le frontend sur `ai-chat.com` via Traefik (`ingressClassName: traefik`). Tout le trafic entrant sur `/` est routé vers le Service `ai-chat-frontend` sur le port `80`.
+Exposes the frontend at `ai-chat.com` through Traefik (`ingressClassName: traefik`). All incoming traffic on `/` is routed to the `ai-chat-frontend` Service on port `80`.
 
-## 🤖 Modèles IA
+## 🤖 AI Models
 
-| Modèle | Taille | Usage |
+| Model | Size | Use |
 |---|---|---|
-| `llama3:8b` | ~5GB | Génération de texte (route `/api/llama`) |
-| `llava:7b` | ~4GB | Analyse texte + images (route `/api/llava`) |
-| `gemma4:12b` | ~7.6GB | Multimodal texte/image/audio/vidéo (route `/api/gemma`) |
+| `llama3:8b` | ~5GB | Text generation (route `/api/llama`) |
+| `llava:7b` | ~4GB | Text and image analysis (route `/api/llava`) |
+| `gemma4:12b` | ~7.6GB | Multimodal text/image/audio/video (route `/api/gemma`) |
 
-> **Note** : Le premier démarrage d'Ollama prend **20-30 minutes** pour télécharger les 3 modèles (~16.6GB). Les démarrages suivants sont instantanés car les modèles sont persistés dans le PVC.
+> **Note:** The first Ollama startup takes **20–30 minutes** to download the 3 models (~16.6GB). Subsequent startups are immediate because the models are persisted in the PVC.
 
-## 🔄 Mise à jour de l'image
+## 🔄 Updating the Image
 
-Le tag de l'image frontend est mis à jour automatiquement par le pipeline CI du repo [AI-Chat-app](https://github.com/CL-KRMA/AI-Chat-app) via ce pattern :
+The frontend image tag is automatically updated by the CI pipeline in the [AI-Chat-app](https://github.com/CL-KRMA/AI-Chat-app) repository using this pattern:
 
 ```bash
-# Le pipeline CI exécute cette commande après un build réussi
+# The CI pipeline runs this command after a successful build
 sed -i "s|ghcr.io/cl-krma/ai-chat-app:.*|ghcr.io/cl-krma/ai-chat-app:<SHA>|g" frontend.yaml
 git commit -m "chore: update ai-chat-app image to <SHA>"
 git push origin main
 ```
 
-ArgoCD détecte le nouveau commit et déploie automatiquement la nouvelle image.
+Argo CD detects the new commit and automatically deploys the new image.
 
-**Flux complet :**
+**Complete workflow:**
 ```
-Push sur AI-Chat-app
-  → GitHub Actions (lint → tests → build → scan Trivy)
-  → Push image sur GHCR
-  → Mise à jour frontend.yaml dans ce repo
-  → ArgoCD détecte le changement
-  → Déploiement sur K3s
+Push to AI-Chat-app
+  → GitHub Actions (lint → tests → build → Trivy scan)
+  → Push image to GHCR
+  → Update frontend.yaml in this repository
+  → Argo CD detects the change
+  → Deploy to K3s
 ```
 
-## 🔧 Dépannage
+## 🔧 Troubleshooting
 
-### Vérifier l'état des pods
+### Check Pod Status
 
 ```bash
 kubectl get pods -n ai-chat
-kubectl get pods -n ai-chat -w  # watch en temps réel
+kubectl get pods -n ai-chat -w  # watch in real time
 ```
 
-### Ollama bloqué en Init:Error
+### Ollama Stuck in Init:Error
 
 ```bash
-# Voir les logs de l'initContainer
+# View the init container logs
 kubectl logs -n ai-chat -l app=ollama -c pull-models
 
-# Causes possibles :
-# - Réseau indisponible (pull impossible)
-# - Disque plein (vérifier le PVC)
-# - Modèle introuvable sur le registry Ollama
+# Possible causes:
+# - Network unavailable (pull failed)
+# - Disk full (check the PVC)
+# - Model not found in the Ollama registry
 ```
 
-### Ollama bloqué en Pending
+### Ollama Stuck in Pending
 
 ```bash
 kubectl describe pod -n ai-chat -l app=ollama
 
-# Causes possibles :
-# - Pas assez de RAM disponible sur le nœud (besoin 16Gi)
-# - PVC ne peut pas être monté (nœud différent)
+# Possible causes:
+# - Not enough RAM available on the node (16Gi required)
+# - PVC cannot be mounted (different node)
 ```
 
-### Frontend retourne des erreurs 500
+### Frontend Returns 500 Errors
 
 ```bash
-# Vérifier qu'Ollama est bien Running
+# Check that Ollama is Running
 kubectl get pods -n ai-chat
 
-# Vérifier les logs du frontend
+# Check the frontend logs
 kubectl logs -n ai-chat -l app=ai-chat-frontend
 
-# Tester l'API Ollama directement depuis le cluster
+# Test the Ollama API directly from the cluster
 kubectl exec -n ai-chat deploy/ollama -- curl -s http://localhost:11434/api/tags
 ```
 
-### Ingress ne répond pas
+### Ingress Not Responding
 
 ```bash
-# Vérifier que Traefik tourne
+# Check that Traefik is running
 kubectl get pods -n kube-system | grep traefik
 
-# Vérifier l'Ingress
+# Check the Ingress
 kubectl describe ingress -n ai-chat ai-chat-ingress
 
-# Vérifier que le DNS pointe vers le bon nœud
+# Check that DNS points to the correct node
 nslookup ai-chat.com
 ```
 
-### Voir les modèles installés sur Ollama
+### List Installed Ollama Models
 
 ```bash
 kubectl exec -n ai-chat deploy/ollama -- ollama list
 ```
 
-### Forcer un re-sync ArgoCD
+### Force an Argo CD Re-sync
 
 ```bash
 argocd app sync ai-chat
-# ou depuis l'interface ArgoCD : cliquer sur "Sync"
+# or click "Sync" in the Argo CD interface
 ```
 
-## 📚 Repos liés
+## 📚 Related Repositories
 
-- [AI-Chat-app](https://github.com/CL-KRMA/AI-Chat-app) — code source Next.js + pipeline CI/CD
-- [AI-Chat-infra](https://github.com/CL-KRMA/AI-Chat-infra) — infrastructure AWS (K3s cluster)
+- [AI-Chat-app](https://github.com/CL-KRMA/AI-Chat-app) — Next.js source code + CI/CD pipeline
+- [AI-Chat-infra](https://github.com/CL-KRMA/AI-Chat-infra) — AWS infrastructure (K3s cluster)
 
-## 📝 Licence
+## 📝 License
 
-Ce projet est sous licence MIT.  
-Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+This project is licensed under the MIT License.
+See the [LICENSE](LICENSE) file for more details.
 
-## 👤 Auteur
+## 👤 Author
 
-Créé par Cheick — Juin 2026
+Created by Cheick — June 2026
