@@ -21,7 +21,7 @@ This GitOps repository orchestrates the deployment of two main components on Kub
 - **Ollama** — AI inference server with 3 models (llama3:8b, llava:7b, gemma4:12b)
 - **Next.js frontend** — Chat interface exposed through a Traefik Ingress
 
-The CI/CD pipeline in the [AI-Chat-app](https://github.com/CL-KRMA/AI-Chat-app) repository automatically updates the image tag in `frontend.yaml` on every push to `main`, triggering an Argo CD deployment.
+The CI/CD pipeline in the [AI-Chat-app](https://github.com/CL-K/AI-Chat-app) repository automatically updates the image tag in `frontend.yaml` on every push to `main`, triggering an Argo CD deployment.
 
 ## 🏗️ Architecture
 
@@ -112,7 +112,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/CL-KRMA/AI-Chat-gitops
+    repoURL: https://github.com/CL-K/AI-Chat-gitops
     targetRevision: main
     path: .
   destination:
@@ -170,11 +170,11 @@ Exposes the frontend at `ai-chat.com` through Traefik (`ingressClassName: traefi
 
 ## 🔄 Updating the Image
 
-The frontend image tag is automatically updated by the CI pipeline in the [AI-Chat-app](https://github.com/CL-KRMA/AI-Chat-app) repository using this pattern:
+The frontend image tag is automatically updated by the CI pipeline in the [AI-Chat-app](https://github.com/CL-K/AI-Chat-app) repository using this pattern:
 
 ```bash
 # The CI pipeline runs this command after a successful build
-sed -i "s|ghcr.io/cl-krma/ai-chat-app:.*|ghcr.io/cl-krma/ai-chat-app:<SHA>|g" frontend.yaml
+sed -i "s|ghcr.io/cl-k/ai-chat-app:.*|ghcr.io/cl-k/ai-chat-app:<SHA>|g" frontend.yaml
 git commit -m "chore: update ai-chat-app image to <SHA>"
 git push origin main
 ```
@@ -263,8 +263,8 @@ argocd app sync ai-chat
 
 ## 📚 Related Repositories
 
-- [AI-Chat-app](https://github.com/CL-KRMA/AI-Chat-app) — Next.js source code + CI/CD pipeline
-- [AI-Chat-infra](https://github.com/CL-KRMA/AI-Chat-infra) — AWS infrastructure (K3s cluster)
+- [AI-Chat-app](https://github.com/CL-K/AI-Chat-app) — Next.js source code + CI/CD pipeline
+- [AI-Chat-infra](https://github.com/CL-K/AI-Chat-infra) — AWS infrastructure (K3s cluster)
 
 ## 📝 License
 
